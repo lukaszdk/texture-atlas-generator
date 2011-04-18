@@ -31,8 +31,10 @@ public class AtlasGenerator
 		
 		List<File> imageFiles = new ArrayList<File>();
 		GetImageFiles(file, imageFiles);
+		
+		System.out.println("Found " + imageFiles.size() + " images");
 
-		Map<BufferedImage, String> imageMap = new TreeMap<BufferedImage, String>(new BufferedImageComparator());
+		Set<ImageName> imageNameSet = new TreeSet<ImageName>(new ImageNameComparator());
 		
 		for(File f : imageFiles)
 		{
@@ -48,7 +50,7 @@ public class AtlasGenerator
 				
 				String path = f.getPath().substring(0, f.getPath().lastIndexOf(".")).replace("\\", "/");
 				
-				imageMap.put(image, path);
+				imageNameSet.add(new ImageName(image, path));
 				
 			}
 			catch(IOException e)
@@ -61,13 +63,17 @@ public class AtlasGenerator
 		
 		textures.add(new Texture(width, height));
 		
-		for(Map.Entry<BufferedImage, String> e : imageMap.entrySet())
+		int count = 0;
+		
+		for(ImageName imageName : imageNameSet)
 		{
 			boolean added = false;
 			
+			System.out.println("Adding " + imageName.name + " to atlas (" + (++count) + ")");
+			
 			for(Texture texture : textures)
 			{
-				if(texture.AddImage(e.getKey(), e.getValue()))
+				if(texture.AddImage(imageName.image, imageName.name))
 				{
 					added = true;
 					break;
@@ -77,17 +83,17 @@ public class AtlasGenerator
 			if(!added)
 			{
 				Texture texture = new Texture(width, height);
-				texture.AddImage(e.getKey(), e.getValue());
+				texture.AddImage(imageName.image, imageName.name);
 				textures.add(texture);
 			}
-			
 		}
 		
-		int count = 0;
+		count = 0;
 		
 		for(Texture texture : textures)
 		{
-			texture.Write(name + (++count));
+			System.out.println("Writing atlas: " + name + (++count));
+			texture.Write(name + count);
 		}
 	}
 	
@@ -107,14 +113,33 @@ public class AtlasGenerator
 		}
 	}
 	
-	private class BufferedImageComparator implements Comparator<BufferedImage>
+	private class ImageName 
 	{
-		public int compare(BufferedImage image1, BufferedImage image2)
+		public BufferedImage image;
+		public String name;
+		
+		public ImageName(BufferedImage image, String name)
 		{
-			int area1 = image1.getWidth() * image1.getHeight();
-			int area2 = image2.getWidth() * image2.getHeight();
-			
-			return area2 - area1;
+			this.image = image;
+			this.name = name;
+		}
+	}
+	
+	private class ImageNameComparator implements Comparator<ImageName>
+	{
+		public int compare(ImageName image1, ImageName image2)
+		{
+			int area1 = image1.image.getWidth() * image1.image.getHeight();
+			int area2 = image2.image.getWidth() * image2.image.getHeight();
+		
+			if(area1 != area2)
+			{
+				return area2 - area1;
+			}
+			else
+			{
+				return image1.name.compareTo(image2.name);
+			}
 		}
 	}
 		
