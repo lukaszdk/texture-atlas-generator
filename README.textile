@@ -18,7 +18,7 @@ h2. Usage
 
 pre. AtlasGenerator <name> <width> <height> <directory>
 
-Example: 
+h2. Example
 
 pre. AtlasGenerator atlas 2048 2048 images
 
