@@ -181,6 +181,7 @@ public class AtlasGenerator
 				return child[0] == null && child[1] == null;
 			}
 			
+			// Algorithm from http://www.blackpawn.com/texts/lightmaps/
 			public Node Insert(BufferedImage image)
 			{
 				if(!IsLeaf())
