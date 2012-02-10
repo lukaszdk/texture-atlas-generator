@@ -9,29 +9,38 @@ public class AtlasGenerator
 {	
 	public static void main(String args[])
 	{
-		if(args.length != 4)
+		if(args.length < 4)
 		{
 			System.out.println("Texture Atlas Generator by Lukasz Bruun - lukasz.dk");
-			System.out.println("\tUsage: AtlasGenerator <name> <width> <height> <directory>");
+			System.out.println("\tUsage: AtlasGenerator <name> <width> <height> <directory> [<directory> ...]");
 			System.out.println("\tExample: AtlasGenerator atlas 2048 2048 images");
 			return;
 		}
 
-		AtlasGenerator atlasGenerator = new AtlasGenerator();	
-		atlasGenerator.Run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), new File(args[3]));
-	}
-	
-	public void Run(String name, int width, int height, File file)
-	{		
-		if(!file.exists() || !file.isDirectory())
+		AtlasGenerator atlasGenerator = new AtlasGenerator();
+		List<File> dirs = new ArrayList<File>();
+		for(int i = 3; i < args.length; ++i)
 		{
-			System.out.println("Error: Could not find directory '" + file.getPath() + "'");
-			return;
+			dirs.add(new File(args[i]));
 		}
-		
+		atlasGenerator.Run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), dirs);
+	}
+
+	public void Run(String name, int width, int height, List<File> dirs)
+	{
 		List<File> imageFiles = new ArrayList<File>();
-		GetImageFiles(file, imageFiles);
-		
+
+		for(File file : dirs)
+		{
+			if(!file.exists() || !file.isDirectory())
+			{
+				System.out.println("Error: Could not find directory '" + file.getPath() + "'");
+				return;
+			}
+
+			GetImageFiles(file, imageFiles);
+		}
+
 		System.out.println("Found " + imageFiles.size() + " images");
 
 		Set<ImageName> imageNameSet = new TreeSet<ImageName>(new ImageNameComparator());
