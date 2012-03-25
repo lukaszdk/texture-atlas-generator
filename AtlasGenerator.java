@@ -12,21 +12,23 @@ public class AtlasGenerator
 		if(args.length < 4)
 		{
 			System.out.println("Texture Atlas Generator by Lukasz Bruun - lukasz.dk");
-			System.out.println("\tUsage: AtlasGenerator <name> <width> <height> <directory> [<directory> ...]");
-			System.out.println("\tExample: AtlasGenerator atlas 2048 2048 images");
+			System.out.println("\tUsage: AtlasGenerator <name> <width> <height> <padding> <ignorePaths> <directory> [<directory> ...]");
+			System.out.println("\t\t<padding>: Padding between images in the final texture atlas.");
+			System.out.println("\t\t<ignorePaths>: Only writes out the file name without the path of it to the atlas txt file.");
+			System.out.println("\tExample: AtlasGenerator atlas 2048 2048 5 1 images");
 			return;
 		}
 
 		AtlasGenerator atlasGenerator = new AtlasGenerator();
 		List<File> dirs = new ArrayList<File>();
-		for(int i = 3; i < args.length; ++i)
+		for(int i = 5; i < args.length; ++i)
 		{
 			dirs.add(new File(args[i]));
 		}
-		atlasGenerator.Run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), dirs);
+		atlasGenerator.Run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]) != 0, dirs);
 	}
 
-	public void Run(String name, int width, int height, List<File> dirs)
+	public void Run(String name, int width, int height, int padding, boolean fileNameOnly, List<File> dirs)
 	{
 		List<File> imageFiles = new ArrayList<File>();
 
@@ -82,7 +84,7 @@ public class AtlasGenerator
 			
 			for(Texture texture : textures)
 			{
-				if(texture.AddImage(imageName.image, imageName.name))
+				if(texture.AddImage(imageName.image, imageName.name, padding))
 				{
 					added = true;
 					break;
@@ -92,7 +94,7 @@ public class AtlasGenerator
 			if(!added)
 			{
 				Texture texture = new Texture(width, height);
-				texture.AddImage(imageName.image, imageName.name);
+				texture.AddImage(imageName.image, imageName.name, padding);
 				textures.add(texture);
 			}
 		}
@@ -102,7 +104,7 @@ public class AtlasGenerator
 		for(Texture texture : textures)
 		{
 			System.out.println("Writing atlas: " + name + (++count));
-			texture.Write(name + count);
+			texture.Write(name + count, fileNameOnly);
 		}
 	}
 	
@@ -191,18 +193,18 @@ public class AtlasGenerator
 			}
 			
 			// Algorithm from http://www.blackpawn.com/texts/lightmaps/
-			public Node Insert(BufferedImage image)
+			public Node Insert(BufferedImage image, int padding)
 			{
 				if(!IsLeaf())
 				{
-					Node newNode = child[0].Insert(image);
+					Node newNode = child[0].Insert(image, padding);
 					
 					if(newNode != null)
 					{
 						return newNode;
 					}
 					
-					return child[1].Insert(image);
+					return child[1].Insert(image, padding);
 				}
 				else
 				{
@@ -228,15 +230,25 @@ public class AtlasGenerator
 					if(dw > dh)
 					{
 						child[0] = new Node(rect.x, rect.y, image.getWidth(), rect.height);
-						child[1] = new Node(rect.x+image.getWidth(), rect.y, rect.width - image.getWidth(), rect.height);
+						child[1] = new Node(padding+rect.x+image.getWidth(), rect.y, rect.width - image.getWidth() - padding, rect.height);
 					}
 					else
 					{
 						child[0] = new Node(rect.x, rect.y, rect.width, image.getHeight());
-						child[1] = new Node(rect.x, rect.y+image.getHeight(), rect.width, rect.height - image.getHeight());
+						child[1] = new Node(rect.x, padding+rect.y+image.getHeight(), rect.width, rect.height - image.getHeight() - padding);
 					}
+					/*if(dw > dh)
+					{
+						child[0] = new Node(rect.x, rect.y, image.getWidth(), rect.height);
+						child[1] = new Node(padding+rect.x+image.getWidth(), rect.y, rect.width - image.getWidth(), rect.height);
+					}
+					else
+					{
+						child[0] = new Node(rect.x, rect.y, rect.width, image.getHeight());
+						child[1] = new Node(rect.x, padding+rect.y+image.getHeight(), rect.width, rect.height - image.getHeight());
+					}*/
 					
-					return child[0].Insert(image);
+					return child[0].Insert(image, padding);
 				}
 			}
 		}
@@ -255,9 +267,9 @@ public class AtlasGenerator
 			rectangleMap = new TreeMap<String, Rectangle>();
 		}
 		
-		public boolean AddImage(BufferedImage image, String name)
+		public boolean AddImage(BufferedImage image, String name, int padding)
 		{
-			Node node = root.Insert(image);
+			Node node = root.Insert(image, padding);
 			
 			if(node == null)
 			{
@@ -271,7 +283,7 @@ public class AtlasGenerator
 			return true;	
 		}
 		
-		public void Write(String name)
+		public void Write(String name, boolean fileNameOnly)
 		{			
 			try
 			{
@@ -282,7 +294,10 @@ public class AtlasGenerator
 				for(Map.Entry<String, Rectangle> e : rectangleMap.entrySet())
 				{
 					Rectangle r = e.getValue();
-					atlas.write(e.getKey() + " " + r.x + " " + r.y + " " + r.width + " " + r.height);
+					String keyVal = e.getKey();
+					if (fileNameOnly)
+						keyVal = keyVal.substring(keyVal.lastIndexOf('/') + 1);
+					atlas.write(keyVal + " " + r.x + " " + r.y + " " + r.width + " " + r.height);
 					atlas.newLine();
 				}
 				
