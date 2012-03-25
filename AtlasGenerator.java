@@ -12,23 +12,24 @@ public class AtlasGenerator
 		if(args.length < 4)
 		{
 			System.out.println("Texture Atlas Generator by Lukasz Bruun - lukasz.dk");
-			System.out.println("\tUsage: AtlasGenerator <name> <width> <height> <padding> <ignorePaths> <directory> [<directory> ...]");
+			System.out.println("\tUsage: AtlasGenerator <name> <width> <height> <padding> <ignorePaths> <unitCoordinates> <directory> [<directory> ...]");
 			System.out.println("\t\t<padding>: Padding between images in the final texture atlas.");
 			System.out.println("\t\t<ignorePaths>: Only writes out the file name without the path of it to the atlas txt file.");
-			System.out.println("\tExample: AtlasGenerator atlas 2048 2048 5 1 images");
+			System.out.println("\t\t<unitCoordinates>: Coordinates will be written to atlas txt file in 0..1 range instead of 0..width, 0..height range");
+			System.out.println("\tExample: AtlasGenerator atlas 2048 2048 5 1 1 images");
 			return;
 		}
 
 		AtlasGenerator atlasGenerator = new AtlasGenerator();
 		List<File> dirs = new ArrayList<File>();
-		for(int i = 5; i < args.length; ++i)
+		for(int i = 6; i < args.length; ++i)
 		{
 			dirs.add(new File(args[i]));
 		}
-		atlasGenerator.Run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]) != 0, dirs);
+		atlasGenerator.Run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]) != 0, Integer.parseInt(args[5]) != 0, dirs);
 	}
 
-	public void Run(String name, int width, int height, int padding, boolean fileNameOnly, List<File> dirs)
+	public void Run(String name, int width, int height, int padding, boolean fileNameOnly, boolean unitCoordinates, List<File> dirs)
 	{
 		List<File> imageFiles = new ArrayList<File>();
 
@@ -104,7 +105,7 @@ public class AtlasGenerator
 		for(Texture texture : textures)
 		{
 			System.out.println("Writing atlas: " + name + (++count));
-			texture.Write(name + count, fileNameOnly);
+			texture.Write(name + count, fileNameOnly, unitCoordinates, width, height);
 		}
 	}
 	
@@ -283,7 +284,7 @@ public class AtlasGenerator
 			return true;	
 		}
 		
-		public void Write(String name, boolean fileNameOnly)
+		public void Write(String name, boolean fileNameOnly, boolean unitCoordinates, int width, int height)
 		{			
 			try
 			{
@@ -297,7 +298,12 @@ public class AtlasGenerator
 					String keyVal = e.getKey();
 					if (fileNameOnly)
 						keyVal = keyVal.substring(keyVal.lastIndexOf('/') + 1);
-					atlas.write(keyVal + " " + r.x + " " + r.y + " " + r.width + " " + r.height);
+					if (unitCoordinates)
+					{
+						atlas.write(keyVal + " " + r.x/(float)width + " " + r.y/(float)height + " " + r.width/(float)width + " " + r.height/(float)height);
+					}
+					else
+						atlas.write(keyVal + " " + r.x + " " + r.y + " " + r.width + " " + r.height);
 					atlas.newLine();
 				}
 				
