@@ -16,7 +16,7 @@ pre. javac AtlasGenerator.java
 
 h2. Usage
 
-pre. AtlasGenerator <name> <width> <height> <directory>
+pre. AtlasGenerator <name> <width> <height> <padding> <ignorePaths> <unitCoordinates> <directory>
 
 h2. Example
 
