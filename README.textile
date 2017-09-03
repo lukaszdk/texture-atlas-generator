@@ -16,11 +16,11 @@ pre. javac AtlasGenerator.java
 
 h2. Usage
 
-pre. AtlasGenerator <name> <width> <height> <directory>
+pre. AtlasGenerator <name> <width> <height> <padding> <ignorePaths> <unitCoordinates> <directory>
 
 h2. Example
 
-pre. AtlasGenerator atlas 2048 2048 images
+pre. AtlasGenerator atlas 2048 2048 0 0 0 images
 
 This will take all the PNG files in the _images_ directory next to application and pack them into one or more 2048x2048 atlases named "atlas1.png" to "atlasN.png", where N is the number of atlases generated. More than one atlas is generated if the PNG textures do not fit into one atlas.
 
